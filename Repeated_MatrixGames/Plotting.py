@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import pickle
 import numpy as np
 
-T = 200
+T = 1000
 markers = ['*', 'o', 'x', '^']
 
 
@@ -36,7 +36,6 @@ fig = plt.figure(figsize=(7, 4.5))
 plt.title('Average Expected Regret')
 idx_marker = 0
 for i in range(len(N_types)):
-    print(len(avg_expected_Regrets_P1))
     p = plt.plot(np.arange(T), avg_expected_Regrets_P1[i], marker = markers[idx_marker], markevery = 10, markersize = 7, label = f'all {N_types[i][0]}')
     color = p[0].get_color()
     plt.fill_between(range(T), avg_expected_Regrets_P1[i] - std_expected_Regrets_P1[i], avg_expected_Regrets_P1[i] + std_expected_Regrets_P1[i], alpha=0.1,

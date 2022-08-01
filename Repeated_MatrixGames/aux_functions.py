@@ -61,13 +61,13 @@ def Assign_payoffs(outcome , payoff_matrix):
     return payoff_matrix[tuple(outcome)]
 
 def joint_dist(Mixed_strategies, K):
-    Mixed_strategies = list(Mixed_strategies)
     if len(Mixed_strategies) == 1:
-        return np.array(Mixed_strategies)
+        return Mixed_strategies[0]
     x = Mixed_strategies.pop(0)
     joint_dis = []
+    tmp_joint = joint_dist(Mixed_strategies, K)
     for j in range(K):
-        joint_dis.append(x[j] * joint_dist(Mixed_strategies, K))
+        joint_dis.append(x[j] * tmp_joint)
     return np.array(joint_dis)
 
 

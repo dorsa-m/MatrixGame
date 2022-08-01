@@ -3,9 +3,9 @@ from aux_functions import Assign_payoffs, Player_MWU, Player_OPT_MWU, joint_dist
 import pickle
 from tqdm import tqdm
 
-N = 3  # number of players
-K = 5  # number of actions for each player
-T = 200  # time horizon,   should be at least K*log(K) to have a meaningfull EXP3.P algorithm
+N = 4  # number of players
+K = 8  # number of actions for each player
+T = 1000  # time horizon,   should be at least K*log(K) to have a meaningfull EXP3.P algorithm
 
 " Data to be saved (for post processing/plotting) "
 
@@ -69,18 +69,20 @@ def RunGame(N, K, T, A, types):
                 Game_data.Cum_payoffs[i][a] = np.array(
                     Game_data.Cum_payoffs[i][a] + Assign_payoffs(modified_outcome, A[i]))
 
-                action_expected_payoff = np.multiply(joint_dis, np.moveaxis(A[i], i, 0)[a, ...]).sum()
+                action_expected_payoff = np.sum(np.multiply(joint_dis, np.moveaxis(A[i], i, 0)[a, ...]))
                 expected_payoff_single_actions.append(action_expected_payoff)
-                Game_data.Expected_Cum_payoffs[i][a] = np.array(
-                    Game_data.Cum_payoffs[i][a] + action_expected_payoff)
+                Game_data.Expected_Cum_payoffs[i][a] += action_expected_payoff
+
+
 
             Game_data.Obtained_payoffs[t][i] = Assign_payoffs(Game_data.Played_actions[t], A[i])
             Game_data.Obtained_expected_payoffs[t][i] = np.dot(np.array(expected_payoff_single_actions),
                                                                     np.array(Game_data.Mixed_strategies[t][i]))
 
+
             Game_data.Regrets[t][i] = (np.max(Game_data.Cum_payoffs[i]) - sum(
                 [Game_data.Obtained_payoffs[x][i] for x in range(t + 1)])) / (t + 1)
-            Game_data.Expected_regret[t][i] = (np.max(Game_data.Cum_payoffs[i]) - sum(
+            Game_data.Expected_regret[t][i] = (np.max(Game_data.Expected_Cum_payoffs[i]) - sum(
                 [Game_data.Obtained_expected_payoffs[x][i] for x in range(t + 1)])) / (t + 1)
 
         " Update players next mixed strategy "
@@ -108,7 +110,7 @@ def RunGame(N, K, T, A, types):
 
 " --------------------------------- Begin Simulations --------------------------------- "
 
-Runs = 6
+Runs = 5
 
 N_types = [['MWU'] * N, ['OPT_MWU'] * N]
 
@@ -126,6 +128,7 @@ for i in range(len(N_types)):
         A = []
         for j in range(N):
             A.append(np.random.random(size=[K] * N))
+
 
 
         Games_data, Player = RunGame(N, K, T, A, N_types[i])
