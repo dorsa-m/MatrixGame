@@ -3,15 +3,15 @@ from aux_functions import Assign_payoffs, Player_MWU, Player_OPT_MWU, joint_dist
 import pickle
 from tqdm import tqdm
 
-N = 4  # number of players
-K = 8  # number of actions for each player
+N = 2  # number of players
+K = 3  # number of actions for each player
 T = 1000  # time horizon,   should be at least K*log(K) to have a meaningfull EXP3.P algorithm
 
 " Data to be saved (for post processing/plotting) "
 
 
 class GameData:
-    def __init__(self, K):
+    def __init__(self):
         self.Played_actions = []
         self.Mixed_strategies = []
         self.Obtained_payoffs = []
@@ -19,12 +19,12 @@ class GameData:
         self.Expected_regret = []
         self.Obtained_expected_payoffs = []
         self.Expected_Cum_payoffs = []
+        self.expected_payoff_single_actions = []
         self.Regrets = []
-        self.arms = K
 
 
 def RunGame(N, K, T, A, types):
-    Game_data = GameData(K)
+    Game_data = GameData()
 
     Player = list(range(N))  # list of all players
     min_payoff = []
@@ -34,6 +34,7 @@ def RunGame(N, K, T, A, types):
         payoffs_range.append(np.array(A[i].max() - A[i].min()))
         Game_data.Cum_payoffs.append(np.zeros(K))
         Game_data.Expected_Cum_payoffs.append(np.zeros(K))
+        Game_data.expected_payoff_single_actions.append([np.zeros(K), np.zeros(K)])
 
         if types[i] == 'MWU':
             Player[i] = Player_MWU(K, T, min_payoff[i], payoffs_range[i])
@@ -49,6 +50,8 @@ def RunGame(N, K, T, A, types):
         Game_data.Expected_regret.append([None] * N)  # initialize
         Game_data.Obtained_payoffs.append([None] * N)  # initialize
         Game_data.Obtained_expected_payoffs.append([None] * N)  # initialize
+        Game_data.expected_payoff_single_actions.append([None] * N)  # initialize
+
 
         for i in range(N):
             Game_data.Mixed_strategies[t][i] = np.array(Player[i].mixed_strategy())
@@ -72,6 +75,9 @@ def RunGame(N, K, T, A, types):
                 action_expected_payoff = np.sum(np.multiply(joint_dis, np.moveaxis(A[i], i, 0)[a, ...]))
                 expected_payoff_single_actions.append(action_expected_payoff)
                 Game_data.Expected_Cum_payoffs[i][a] += action_expected_payoff
+
+            Game_data.expected_payoff_single_actions[i].pop(0)
+            Game_data.expected_payoff_single_actions[i].append(np.array(expected_payoff_single_actions))
 
 
 
@@ -101,8 +107,7 @@ def RunGame(N, K, T, A, types):
                     tmp_idx_t_1 = Game_data.Played_actions[t - 1].copy()
                     tmp_idx_t_1.pop(i)
 
-                Player[i].Update(np.moveaxis(A[i], i, -1)[tuple(tmp_idx_t)],
-                                 np.moveaxis(A[i], i, -1)[tuple(tmp_idx_t_1)])
+                Player[i].Update(Game_data.expected_payoff_single_actions[i][1], Game_data.expected_payoff_single_actions[i][0])
 
         Game_data.A = A
     return Game_data, Player

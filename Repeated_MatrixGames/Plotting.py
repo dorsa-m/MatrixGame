@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import pickle
 import numpy as np
 
-T = 1000
+T = 500
 markers = ['*', 'o', 'x', '^']
 
 

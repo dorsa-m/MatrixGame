@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="ea08b1af-a22d-4e0f-9518-44eb2dd9eefb" name="Default Changelist" comment="n player">
+    <list default="true" id="ea08b1af-a22d-4e0f-9518-44eb2dd9eefb" name="Default Changelist" comment="bugs fixed">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Repeated_MatrixGames/Plotting.py" beforeDir="false" afterPath="$PROJECT_DIR$/Repeated_MatrixGames/Plotting.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Repeated_MatrixGames/Repeated_matrix_games.py" beforeDir="false" afterPath="$PROJECT_DIR$/Repeated_MatrixGames/Repeated_matrix_games.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Repeated_MatrixGames/all.pckl" beforeDir="false" afterPath="$PROJECT_DIR$/Repeated_MatrixGames/all.pckl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Repeated_MatrixGames/aux_functions.py" beforeDir="false" afterPath="$PROJECT_DIR$/Repeated_MatrixGames/aux_functions.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -122,7 +121,14 @@
       <option name="project" value="LOCAL" />
       <updated>1659111317694</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="bugs fixed">
+      <created>1659372454036</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1659372454036</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -139,6 +145,7 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="n player" />
-    <option name="LAST_COMMIT_MESSAGE" value="n player" />
+    <MESSAGE value="bugs fixed" />
+    <option name="LAST_COMMIT_MESSAGE" value="bugs fixed" />
   </component>
 </project>
