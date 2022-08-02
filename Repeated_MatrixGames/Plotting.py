@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import pickle
 import numpy as np
 
-T = 500
+T = 10000
 markers = ['*', 'o', 'x', '^']
 
 
@@ -16,7 +16,7 @@ with open('all.pckl', 'rb') as file:
 
 
 
-fig = plt.figure(figsize=(7, 4.5))
+fig = plt.figure(figsize=(14, 9))
 plt.title('Average Regret')
 idx_marker = 0
 for i in range(len(N_types)):
@@ -32,7 +32,7 @@ plt.xlabel('time')
 fig.tight_layout()
 plt.rcParams.update({'font.size': 14})
 
-fig = plt.figure(figsize=(7, 4.5))
+fig = plt.figure(figsize=(14, 9))
 plt.title('Average Expected Regret')
 idx_marker = 0
 for i in range(len(N_types)):

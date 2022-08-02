@@ -5,7 +5,7 @@ from tqdm import tqdm
 
 N = 2  # number of players
 K = 3  # number of actions for each player
-T = 1000  # time horizon,   should be at least K*log(K) to have a meaningfull EXP3.P algorithm
+T = 10000  # time horizon,   should be at least K*log(K) to have a meaningfull EXP3.P algorithm
 
 " Data to be saved (for post processing/plotting) "
 
@@ -99,14 +99,6 @@ def RunGame(N, K, T, A, types):
                 Player[i].Update(np.moveaxis(A[i], i, -1)[tuple(tmp_idx)])
 
             if Player[i].type == "OPT_MWU":
-                tmp_idx_t = Game_data.Played_actions[t].copy()
-                tmp_idx_t.pop(i)
-                if t == 0:
-                    tmp_idx_t_1 = [0] * (N - 1)
-                else:
-                    tmp_idx_t_1 = Game_data.Played_actions[t - 1].copy()
-                    tmp_idx_t_1.pop(i)
-
                 Player[i].Update(Game_data.expected_payoff_single_actions[i][1], Game_data.expected_payoff_single_actions[i][0])
 
         Game_data.A = A
@@ -124,6 +116,7 @@ std_Regrets_P1 = []
 avg_expected_Regrets_P1 = []
 std_expected_Regrets_P1 = []
 
+A_sample = np.array([[0,-1,1],[1,0,-1],[-1,1,0]])
 
 for i in range(len(N_types)):
     np.random.seed(5)
@@ -131,8 +124,11 @@ for i in range(len(N_types)):
     e_Regrets_P1 = [None] * Runs
     for run in range(Runs):
         A = []
-        for j in range(N):
-            A.append(np.random.random(size=[K] * N))
+        # for j in range(N):
+        #     A.append(np.random.random(size=[K] * N))
+        A.append(A_sample)
+        A.append(-A_sample)
+
 
 
 
