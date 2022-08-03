@@ -5,7 +5,7 @@ from tqdm import tqdm
 
 N = 2  # number of players
 K = 3  # number of actions for each player
-T = 10000  # time horizon,   should be at least K*log(K) to have a meaningfull EXP3.P algorithm
+T = 500  # time horizon,   should be at least K*log(K) to have a meaningfull EXP3.P algorithm
 
 " Data to be saved (for post processing/plotting) "
 
@@ -96,7 +96,7 @@ def RunGame(N, K, T, A, types):
             if Player[i].type == "MWU":
                 tmp_idx = Game_data.Played_actions[t].copy()
                 tmp_idx.pop(i)
-                Player[i].Update(np.moveaxis(A[i], i, -1)[tuple(tmp_idx)])
+                Player[i].Update(Game_data.expected_payoff_single_actions[i][1])
 
             if Player[i].type == "OPT_MWU":
                 Player[i].Update(Game_data.expected_payoff_single_actions[i][1], Game_data.expected_payoff_single_actions[i][0])
@@ -107,43 +107,47 @@ def RunGame(N, K, T, A, types):
 
 " --------------------------------- Begin Simulations --------------------------------- "
 
-Runs = 5
+Runs = 20
 
 N_types = [['MWU'] * N, ['OPT_MWU'] * N]
 
-avg_Regrets_P1 = []
-std_Regrets_P1 = []
-avg_expected_Regrets_P1 = []
-std_expected_Regrets_P1 = []
+avg_Regrets_all = []
+std_Regrets_all = []
+avg_expected_Regrets_all = []
+std_expected_Regrets_all = []
+
 
 A_sample = np.array([[0,-1,1],[1,0,-1],[-1,1,0]])
+# A_sample = np.random.random(size=[K] * N)
 
 for i in range(len(N_types)):
-    np.random.seed(5)
-    Regrets_P1 = [None] * Runs
-    e_Regrets_P1 = [None] * Runs
+    Regrets_all = [None] * Runs
+    e_Regrets_all = [None] * Runs
     for run in range(Runs):
-        A = []
-        # for j in range(N):
-        #     A.append(np.random.random(size=[K] * N))
-        A.append(A_sample)
-        A.append(-A_sample)
-
-
-
+        # A = []
+        # A.append(A_sample)
+        # A.append(-A_sample)
+        if run % 3 == 0:
+            A = []
+            for j in range(N):
+                A.append(np.random.random(size=[K] * N))
 
         Games_data, Player = RunGame(N, K, T, A, N_types[i])
-        Regrets_P1[run] = np.array([Games_data.Regrets[x][0] for x in range(T)])
-        e_Regrets_P1[run] = np.array([Games_data.Expected_regret[x][0] for x in range(T)])
-        # print('Run: ' + str(run))
-    avg_Regrets_P1.append(np.mean(Regrets_P1, 0))
-    std_Regrets_P1.append(np.std(Regrets_P1, 0))
-    avg_expected_Regrets_P1.append(np.mean(e_Regrets_P1, 0))
-    std_expected_Regrets_P1.append(np.std(e_Regrets_P1, 0))
+
+        Regrets_all[run] = np.array([np.mean([Games_data.Regrets[x][i] for i in range(N)]) for x in range(T)])
+        e_Regrets_all[run] = np.array([np.mean([Games_data.Expected_regret[x][i] for i in range(N)]) for x in range(T)])
+
+    avg_Regrets_all.append(np.mean(Regrets_all, 0))
+    std_Regrets_all.append(np.std(Regrets_all, 0))
+    avg_expected_Regrets_all.append(np.mean(e_Regrets_all, 0))
+    std_expected_Regrets_all.append(np.std(e_Regrets_all, 0))
+
 
 with open('all.pckl', 'wb') as file:
     pickle.dump(N_types, file)
-    pickle.dump(avg_Regrets_P1, file)
-    pickle.dump(std_Regrets_P1, file)
-    pickle.dump(avg_expected_Regrets_P1, file)
-    pickle.dump(std_expected_Regrets_P1, file)
+    pickle.dump(avg_Regrets_all, file)
+    pickle.dump(std_Regrets_all, file)
+    pickle.dump(avg_expected_Regrets_all, file)
+    pickle.dump(std_expected_Regrets_all, file)
+
+

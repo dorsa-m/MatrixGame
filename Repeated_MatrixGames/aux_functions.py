@@ -9,6 +9,7 @@ class Player_MWU:  # Hedge algorithm (Freund and Schapire. 1997)
         self.min_payoff = min_payoff
         self.payoffs_range = payoffs_range
         self.weights = np.ones(K)
+        # self.weights = np.random.randint(10, size = K)
         self.T  = T
         # self.gamma_t = np.sqrt(8*np.log(K)/T)
         self.gamma_t = 0.01
@@ -32,6 +33,7 @@ class Player_OPT_MWU:  # Hedge algorithm (Freund and Schapire. 1997)
         self.min_payoff = min_payoff
         self.payoffs_range = payoffs_range
         self.weights = np.ones(K)
+        # self.weights = np.random.randint(10, size = K)
         self.T = T
         # self.gamma_t = 1/(2*2* np.log(T)**4)
         self.gamma_t = 0.01

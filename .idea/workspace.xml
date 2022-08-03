@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="ea08b1af-a22d-4e0f-9518-44eb2dd9eefb" name="Default Changelist" comment="bugs in update fixed">
+    <list default="true" id="ea08b1af-a22d-4e0f-9518-44eb2dd9eefb" name="Default Changelist" comment="the payoffs leading to result">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Repeated_MatrixGames/Plotting.py" beforeDir="false" afterPath="$PROJECT_DIR$/Repeated_MatrixGames/Plotting.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Repeated_MatrixGames/Repeated_matrix_games.py" beforeDir="false" afterPath="$PROJECT_DIR$/Repeated_MatrixGames/Repeated_matrix_games.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Repeated_MatrixGames/all.pckl" beforeDir="false" afterPath="$PROJECT_DIR$/Repeated_MatrixGames/all.pckl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Repeated_MatrixGames/aux_functions.py" beforeDir="false" afterPath="$PROJECT_DIR$/Repeated_MatrixGames/aux_functions.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -30,9 +31,6 @@
     <configuration name="Plotting" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
       <option name="SDK_HOME" value="C:\Users\dorsa\AppData\Local\Programs\Python\Python39\python.exe" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Repeated_MatrixGames" />
       <option name="IS_MODULE_SDK" value="false" />
@@ -51,9 +49,6 @@
     <configuration name="Repeated_matrix_games" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
       <option name="SDK_HOME" value="C:\Users\dorsa\AppData\Local\Programs\Python\Python39\python.exe" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Repeated_MatrixGames" />
       <option name="IS_MODULE_SDK" value="false" />
@@ -62,7 +57,7 @@
       <module name="" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Repeated_MatrixGames/Repeated_matrix_games.py" />
       <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="SHOW_COMMAND_LINE" value="true" />
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
       <option name="REDIRECT_INPUT" value="false" />
@@ -90,6 +85,11 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <list>
+      <item itemvalue="Python.aux_functions" />
+      <item itemvalue="Python.Plotting" />
+      <item itemvalue="Python.Repeated_matrix_games" />
+    </list>
     <recent_temporary>
       <list>
         <item itemvalue="Python.Plotting" />
@@ -135,7 +135,14 @@
       <option name="project" value="LOCAL" />
       <updated>1659438447071</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="the payoffs leading to result">
+      <created>1659440168130</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1659440168130</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -154,6 +161,7 @@
     <MESSAGE value="n player" />
     <MESSAGE value="bugs fixed" />
     <MESSAGE value="bugs in update fixed" />
-    <option name="LAST_COMMIT_MESSAGE" value="bugs in update fixed" />
+    <MESSAGE value="the payoffs leading to result" />
+    <option name="LAST_COMMIT_MESSAGE" value="the payoffs leading to result" />
   </component>
 </project>
