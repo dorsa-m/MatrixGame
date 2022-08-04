@@ -3,9 +3,9 @@ from aux_functions import Assign_payoffs, Player_MWU, Player_OPT_MWU, joint_dist
 import pickle
 from tqdm import tqdm
 
-N = 2  # number of players
-K = 3  # number of actions for each player
-T = 500  # time horizon,   should be at least K*log(K) to have a meaningfull EXP3.P algorithm
+N = 4  # number of players
+K = 6  # number of actions for each player
+T = 1000  # time horizon,   should be at least K*log(K) to have a meaningfull EXP3.P algorithm
 
 " Data to be saved (for post processing/plotting) "
 
@@ -107,7 +107,7 @@ def RunGame(N, K, T, A, types):
 
 " --------------------------------- Begin Simulations --------------------------------- "
 
-Runs = 20
+Runs = 5
 
 N_types = [['MWU'] * N, ['OPT_MWU'] * N]
 
@@ -134,9 +134,21 @@ for i in range(len(N_types)):
 
         Games_data, Player = RunGame(N, K, T, A, N_types[i])
 
-        Regrets_all[run] = np.array([np.mean([Games_data.Regrets[x][i] for i in range(N)]) for x in range(T)])
-        e_Regrets_all[run] = np.array([np.mean([Games_data.Expected_regret[x][i] for i in range(N)]) for x in range(T)])
-
+        ind_worst = 0
+        ind_worst_e = 0
+        s = 0
+        s_e = 0
+        for ind in range(N):
+            tmp = sum([Games_data.Regrets[t][ind_worst] for t in range(T)])
+            tmp_e = sum([Games_data.Expected_regret[t][ind_worst] for t in range(T)])
+            if tmp > s:
+                ind_worst = ind
+            if tmp_e > s_e:
+                ind_worst_e = ind
+        # Regrets_all[run] = np.array([np.mean([Games_data.Regrets[x][i] for i in range(N)]) for x in range(T)])
+        # e_Regrets_all[run] = np.array([np.mean([Games_data.Expected_regret[x][i] for i in range(N)]) for x in range(T)])
+        Regrets_all[run] = np.array([Games_data.Regrets[x][i] for x in range(T)])
+        e_Regrets_all[run] = np.array([Games_data.Expected_regret[x][i] for x in range(T)])
     avg_Regrets_all.append(np.mean(Regrets_all, 0))
     std_Regrets_all.append(np.std(Regrets_all, 0))
     avg_expected_Regrets_all.append(np.mean(e_Regrets_all, 0))
