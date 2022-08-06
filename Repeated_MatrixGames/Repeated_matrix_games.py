@@ -42,7 +42,6 @@ def RunGame(N, K, T, A, types):
         Game_data.Mixed_strategies.append([None] * N)  # initialize
         Game_data.Expected_regret.append([None] * N)  # initialize
         Game_data.Expected_Obtained_payoffs.append([None] * N)  # initialize
-        Game_data.Expected_payoff_single_actions.append([None] * N)  # initialize
 
         for i in range(N):
             Game_data.Mixed_strategies[t][i] = np.array(Player[i].mixed_strategy())

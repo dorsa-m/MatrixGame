@@ -8,7 +8,7 @@ class Player_MWU:  # Hedge algorithm (Freund and Schapire. 1997)
         self.weights = np.ones(K)
         # self.weights = np.random.randint(10, size = K)
         self.T = T
-        self.gamma_t = 0.1
+        self.gamma_t = 1
 
     def mixed_strategy(self):
         return self.weights / np.sum(self.weights)
@@ -28,7 +28,7 @@ class Player_OPT_MWU:  # Hedge algorithm (Freund and Schapire. 1997)
         self.weights = np.ones(K)
         # self.weights = np.random.randint(10, size = K)
         self.T = T
-        self.gamma_t = 0.1
+        self.gamma_t = 1
 
     def mixed_strategy(self):
         return self.weights / np.sum(self.weights)

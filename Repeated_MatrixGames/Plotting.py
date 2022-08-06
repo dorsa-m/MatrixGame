@@ -5,7 +5,7 @@ import numpy as np
 markers = ['*', 'o', 'x', '^']
 
 
-def show():
+def show(num):
     with open('all.pckl', 'rb') as file:
         N_types = pickle.load(file)
         avg_expected_Regrets_all = pickle.load(file)
@@ -40,8 +40,8 @@ def show():
     plt.xlabel('time')
     fig.tight_layout()
     plt.rcParams.update({'font.size': 14})
-    plt.savefig(f'result rate {rate}.png')
+    plt.savefig(f'result rate {rate} run {num}.png')
     plt.show()
 
 
-show()
+show(1)
