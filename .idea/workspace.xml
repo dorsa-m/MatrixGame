@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="ea08b1af-a22d-4e0f-9518-44eb2dd9eefb" name="Default Changelist" comment="avg all players">
+    <list default="true" id="ea08b1af-a22d-4e0f-9518-44eb2dd9eefb" name="Default Changelist" comment="worst player">
+      <change afterPath="$PROJECT_DIR$/Repeated_MatrixGames/result rate 1.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Repeated_MatrixGames/Plotting.py" beforeDir="false" afterPath="$PROJECT_DIR$/Repeated_MatrixGames/Plotting.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Repeated_MatrixGames/Repeated_matrix_games.py" beforeDir="false" afterPath="$PROJECT_DIR$/Repeated_MatrixGames/Repeated_matrix_games.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Repeated_MatrixGames/all.pckl" beforeDir="false" afterPath="$PROJECT_DIR$/Repeated_MatrixGames/all.pckl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Repeated_MatrixGames/aux_functions.py" beforeDir="false" afterPath="$PROJECT_DIR$/Repeated_MatrixGames/aux_functions.py" afterDir="false" />
@@ -16,11 +18,15 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="ProjectId" id="2CWJj1unLMjNtUE8zGxCRM3h7QB" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent">
+    <property name="ASKED_ADD_EXTERNAL_FILES" value="true" />
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$/../noregretgames" />
@@ -151,7 +157,14 @@
       <option name="project" value="LOCAL" />
       <updated>1659528271618</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="worst player">
+      <created>1659628682389</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1659628682389</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -167,11 +180,13 @@
     <option name="oldMeFiltersMigrated" value="true" />
   </component>
   <component name="VcsManagerConfiguration">
+    <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
     <MESSAGE value="n player" />
     <MESSAGE value="bugs fixed" />
     <MESSAGE value="bugs in update fixed" />
     <MESSAGE value="the payoffs leading to result" />
     <MESSAGE value="avg all players" />
-    <option name="LAST_COMMIT_MESSAGE" value="avg all players" />
+    <MESSAGE value="worst player" />
+    <option name="LAST_COMMIT_MESSAGE" value="worst player" />
   </component>
 </project>
