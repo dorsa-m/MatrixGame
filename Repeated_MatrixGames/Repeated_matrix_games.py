@@ -3,7 +3,7 @@ import pickle
 from tqdm import tqdm
 from aux_functions import Assign_payoffs, Player_MWU, Player_GPMW, Player_OPT_MWU, joint_dist
 
-N = 3  # number of players
+N = 4  # number of players
 K = 3  # number of actions for each player
 T = 100  # time horizon
 sigma = 1
