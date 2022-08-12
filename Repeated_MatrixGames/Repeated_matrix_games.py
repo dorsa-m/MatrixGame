@@ -1,10 +1,11 @@
 import numpy as np
 import pickle
 from tqdm import tqdm
+from aux_functions import Assign_payoffs, Player_MWU, Player_GPMW, Player_OPT_MWU, joint_dist
 
-N = 2  # number of players
+N = 3  # number of players
 K = 3  # number of actions for each player
-T = 200  # time horizon
+T = 100  # time horizon
 sigma = 1
 
 " Data to be saved (for post processing/plotting) "
