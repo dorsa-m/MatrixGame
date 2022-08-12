@@ -1,11 +1,11 @@
 import numpy as np
-from aux_functions import Assign_payoffs, Player_MWU, Player_OPT_MWU, joint_dist
 import pickle
 from tqdm import tqdm
 
-N = 4  # number of players
-K = 10  # number of actions for each player
-T = 2000  # time horizon
+N = 2  # number of players
+K = 3  # number of actions for each player
+T = 200  # time horizon
+sigma = 1
 
 " Data to be saved (for post processing/plotting) "
 
@@ -14,6 +14,7 @@ class GameData:
     def __init__(self):
         self.Played_actions = []
         self.Mixed_strategies = []
+        self.Obtained_payoffs = []
 
         self.Expected_regret = []
         self.Expected_Obtained_payoffs = []
@@ -21,7 +22,9 @@ class GameData:
         self.Expected_payoff_single_actions = []
 
 
-def RunGame(N, K, T, A, types):
+def RunGame(N, K, T, A, sigma, types):
+    noises = np.random.normal(0, sigma, T)
+
     Game_data = GameData()
 
     Player = list(range(N))  # list of all players
@@ -34,6 +37,8 @@ def RunGame(N, K, T, A, types):
             Player[i] = Player_MWU(K, T)
         if types[i] == 'OPT_MWU':
             Player[i] = Player_OPT_MWU(K, T)
+        if types[i] == 'GPMW':
+            Player[i] = Player_GPMW(K, T, sigma)
 
     " Repated Game "
     for t in tqdm(range(T)):
@@ -42,6 +47,7 @@ def RunGame(N, K, T, A, types):
         Game_data.Mixed_strategies.append([None] * N)  # initialize
         Game_data.Expected_regret.append([None] * N)  # initialize
         Game_data.Expected_Obtained_payoffs.append([None] * N)  # initialize
+        Game_data.Obtained_payoffs.append([None] * N)  # initialize
 
         for i in range(N):
             Game_data.Mixed_strategies[t][i] = np.array(Player[i].mixed_strategy())
@@ -50,6 +56,7 @@ def RunGame(N, K, T, A, types):
         " Assign payoffs and compute regrets"
 
         for i in range(N):
+            Game_data.Obtained_payoffs[t][i] = Assign_payoffs(Game_data.Played_actions[t], A[i])
 
             others_probabilities = Game_data.Mixed_strategies[t].copy()
             others_probabilities.pop(i)
@@ -73,23 +80,37 @@ def RunGame(N, K, T, A, types):
         " Update players next mixed strategy "
         for i in range(N):
             if Player[i].type == "MWU":
-                tmp_idx = Game_data.Played_actions[t].copy()
-                tmp_idx.pop(i)
                 Player[i].Update(Game_data.Expected_payoff_single_actions[i][1], t)
 
             if Player[i].type == "OPT_MWU":
                 Player[i].Update(Game_data.Expected_payoff_single_actions[i][1],
                                  Game_data.Expected_payoff_single_actions[i][0], t, N)
 
+            if Player[i].type == "GPMW":
+                history_actions = np.array([Game_data.Played_actions[x] for x in range(t + 1)])
+                history_payoffs = np.array([Game_data.Obtained_payoffs[x][i] + noises[x] for x in range(t + 1)])
+                '''remark! for expected payoffs you should do regression for all K^N points and calculate the expected
+                result and pass it to the update function. Find an efficient way to do that'''
+                all_possible_profiles = []
+                for a in range(K):
+                    modified_outcome = np.array(Game_data.Played_actions[t])
+                    modified_outcome[i] = a
+                    all_possible_profiles.append(modified_outcome)
+                all_possible_profiles = np.array(all_possible_profiles)
+                Player[i].GP_update(history_actions, history_payoffs, all_possible_profiles)
+                payoffs = Player[i].UCB
+                Player[i].Update(payoffs, t)
+
     return Game_data, Player
 
 
 " --------------------------------- Begin Simulations --------------------------------- "
 
-Runs = 30
+Runs = 9
 # np.random.seed(10)
 
-N_types = [['MWU'] * N, ['OPT_MWU'] * N]
+# N_types = [['MWU'] * N, ['OPT_MWU'] * N, ['GPMW'] * N]
+N_types = [['GPMW'] * N]
 avg_expected_Regrets_all = []
 std_expected_Regrets_all = []
 avg_expected_Regrets_worst = []
@@ -107,7 +128,7 @@ for i in range(len(N_types)):
     e_Regrets_all = [None] * Runs
     e_Regrets_worst = [None] * Runs
     for run in range(Runs):
-        Games_data, Player = RunGame(N, K, T, A_all[run], N_types[i])
+        Games_data, Player = RunGame(N, K, T, A_all[run], sigma, N_types[i])
 
         # finding player with max regret
         ind_worst_e = 0

@@ -1,4 +1,6 @@
 import numpy as np
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import RBF
 
 
 class Player_MWU:  # Hedge algorithm (Freund and Schapire. 1997)
@@ -43,8 +45,36 @@ class Player_OPT_MWU:  # Hedge algorithm (Freund and Schapire. 1997)
             self.weights)  # To avoid numerical errors when the weights become too small
 
 
+class Player_GPMW:
+    def __init__(self, K, T, sigma):
+        self.type = "GPMW"
+        self.K = K
+        self.T = T
+        self.weights = np.ones(K)
+        self.UCB = np.zeros(K)
+        self.gamma_t = 1
+        self.beta_t = 2.0
+        self.kernel = RBF()
+        self.gpr = GaussianProcessRegressor(kernel = self.kernel, n_restarts_optimizer=10, alpha=sigma**2)
+
+    def mixed_strategy(self):
+        return self.weights / np.sum(self.weights)
+
+    def GP_update(self, history_actions, history_payoffs, X_predicts):
+        self.gpr.fit(history_actions, history_payoffs)
+        mean_prediction, std_prediction = self.gpr.predict(X_predicts, return_std=True)
+        self.UCB = mean_prediction + self.beta_t*std_prediction
+
+    def Update(self, payoffs, t):
+        # self.gamma_t = np.sqrt(8*np.log(K)/t)
+        losses = np.ones(self.K) - np.array(payoffs)
+        self.weights = np.multiply(self.weights, np.exp(np.multiply(self.gamma_t, -losses)))
+        self.weights = self.weights / np.sum(
+            self.weights)
+
+
 def Assign_payoffs(outcome, payoff_matrix):
-    return payoff_matrix[tuple(outcome)]
+    return np.squeeze(payoff_matrix[tuple(outcome)])
 
 
 def joint_dist(Mixed_strategies, K):
