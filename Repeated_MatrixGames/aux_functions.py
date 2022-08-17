@@ -46,12 +46,13 @@ class Player_OPT_MWU:  # Hedge algorithm (Freund and Schapire. 1997)
 
 
 class Player_GPMW:
-    def __init__(self, K, T, sigma):
+    def __init__(self, K, T, N, sigma):
         self.type = "GPMW"
         self.K = K
         self.T = T
+        self.N = N
         self.weights = np.ones(K)
-        self.UCB = np.zeros(K)
+        self.UCB_Matrix = np.zeros([K]*N)
         self.gamma_t = 1
         self.beta_t = 2.0
         self.kernel = RBF()
@@ -60,10 +61,12 @@ class Player_GPMW:
     def mixed_strategy(self):
         return self.weights / np.sum(self.weights)
 
-    def GP_update(self, history_actions, history_payoffs, X_predicts):
+    def GP_update(self, history_actions, history_payoffs, X_predicts, i):
         self.gpr.fit(history_actions, history_payoffs)
         mean_prediction, std_prediction = self.gpr.predict(X_predicts, return_std=True)
-        self.UCB = mean_prediction + self.beta_t*std_prediction
+        mean_prediction = np.array(mean_prediction).reshape([self.K]*self.N)
+        std_prediction = np.array(std_prediction).reshape([self.K]*self.N)
+        self.UCB_Matrix = mean_prediction + self.beta_t*std_prediction
 
     def Update(self, payoffs, t):
         # self.gamma_t = np.sqrt(8*np.log(K)/t)
@@ -71,6 +74,38 @@ class Player_GPMW:
         self.weights = np.multiply(self.weights, np.exp(np.multiply(self.gamma_t, -losses)))
         self.weights = self.weights / np.sum(
             self.weights)
+
+class Player_OPT_GPMW:
+    def __init__(self, K, T, N, sigma):
+        self.type = "OPT_GPMW"
+        self.K = K
+        self.T = T
+        self.N = N
+        self.weights = np.ones(K)
+        self.UCB_Matrix = np.zeros([K]*N)
+        self.gamma_t = 1
+        self.beta_t = 2.0
+        self.kernel = RBF()
+        self.gpr = GaussianProcessRegressor(kernel = self.kernel, n_restarts_optimizer=10, alpha=sigma**2)
+
+    def mixed_strategy(self):
+        return self.weights / np.sum(self.weights)
+
+    def GP_update(self, history_actions, history_payoffs, X_predicts, i):
+        self.gpr.fit(history_actions, history_payoffs)
+        mean_prediction, std_prediction = self.gpr.predict(X_predicts, return_std=True)
+        mean_prediction = np.array(mean_prediction).reshape([self.K]*self.N)
+        std_prediction = np.array(std_prediction).reshape([self.K]*self.N)
+        self.UCB_Matrix = mean_prediction + self.beta_t*std_prediction
+
+    def Update(self, payoffs_t, payoffs_t_1, t, N):
+        # self.gamma_t = np.sqrt(8*np.log(K)/t)
+        loss_t = np.ones(self.K) - payoffs_t
+        loss_t_1 = np.ones(self.K) - payoffs_t_1
+        losses = 2 * loss_t - loss_t_1
+        self.weights = np.multiply(self.weights, np.exp(np.multiply(self.gamma_t, -losses)))
+        self.weights = self.weights / np.sum(
+            self.weights)  # To avoid numerical errors when the weights become too small
 
 
 def Assign_payoffs(outcome, payoff_matrix):
