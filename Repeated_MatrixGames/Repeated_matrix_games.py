@@ -6,7 +6,7 @@ from sklearn.gaussian_process.kernels import RBF
 
 N = 3  # number of players
 K = 4  # number of actions for each player
-T = 100  # time horizon
+T = 150  # time horizon
 sigma = 1
 
 " Data to be saved (for post processing/plotting) "
@@ -183,6 +183,8 @@ for i in range(len(N_types)):
     rate = Player[0].gamma_t
 
 with open('all.pckl', 'wb') as file:
+    pickle.dump(N, file)
+    pickle.dump(K, file)
     pickle.dump(N_types, file)
     pickle.dump(avg_expected_Regrets_all, file)
     pickle.dump(std_expected_Regrets_all, file)
