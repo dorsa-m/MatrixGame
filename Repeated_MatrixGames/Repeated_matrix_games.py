@@ -1,12 +1,13 @@
 import numpy as np
 import pickle
 from tqdm import tqdm
-from aux_functions import Assign_payoffs, Player_MWU, Player_GPMW, Player_OPT_MWU, joint_dist
+from aux_functions import Assign_payoffs, Player_MWU, Player_GPMW, Player_OPT_MWU, Player_OPT_GPMW, joint_dist, \
+    get_combinations
 from sklearn.gaussian_process.kernels import RBF
 
-N = 3  # number of players
-K = 4  # number of actions for each player
-T = 150  # time horizon
+N = 4  # number of players
+K = 6  # number of actions for each player
+T = 300  # time horizon
 sigma = 1
 
 " Data to be saved (for post processing/plotting) "
@@ -40,9 +41,9 @@ def RunGame(N, K, T, A, sigma, types):
         if types[i] == 'OPT_MWU':
             Player[i] = Player_OPT_MWU(K, T)
         if types[i] == 'GPMW':
-            Player[i] = Player_GPMW(K, T, N, sigma)
+            Player[i] = Player_GPMW(K, T, N, sigma, all_action_profiles)
         if types[i] == 'OPT_GPMW':
-            Player[i] = Player_GPMW(K, T, N, sigma)
+            Player[i] = Player_OPT_GPMW(K, T, N, sigma, all_action_profiles)
 
     " Repated Game "
     for t in tqdm(range(T)):
@@ -102,21 +103,16 @@ def RunGame(N, K, T, A, sigma, types):
             if Player[i].type == "GPMW":
                 history_actions = np.array([Game_data.Played_actions[x] for x in range(t + 1)])
                 history_payoffs = np.array([Game_data.Obtained_payoffs[x][i] + noises[x] for x in range(t + 1)])
-                Player[i].GP_update(history_actions, history_payoffs, all_action_profiles, i)
+                Player[i].GP_update(history_actions, history_payoffs, t)
                 Player[i].Update(Game_data.Expected_payoff_to_update[i][1], t)
 
             if Player[i].type == "OPT_GPMW":
                 history_actions = np.array([Game_data.Played_actions[x] for x in range(t + 1)])
                 history_payoffs = np.array([Game_data.Obtained_payoffs[x][i] + noises[x] for x in range(t + 1)])
-                Player[i].GP_update(history_actions, history_payoffs, all_action_profiles, i)
+                Player[i].GP_update(history_actions, history_payoffs)
                 Player[i].Update(Game_data.Expected_payoff_to_update[i][1],
                                  Game_data.Expected_payoff_to_update[i][0], t, N)
     return Game_data, Player
-
-
-def get_combinations(params):
-    all_indices = np.indices(params)
-    return np.moveaxis(all_indices, 0, -1).reshape(-1, len(params))
 
 
 '''is normalization needed??'''
@@ -143,7 +139,7 @@ def Generate_A(K):
 " --------------------------------- Begin Simulations --------------------------------- "
 
 Runs = 9
-# np.random.seed(10)
+np.random.seed(10)
 
 N_types = [['MWU'] * N, ['OPT_MWU'] * N, ['GPMW'] * N, ['OPT_GPMW'] * N]
 avg_expected_Regrets_all = []
