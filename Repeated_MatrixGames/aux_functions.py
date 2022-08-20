@@ -1,6 +1,6 @@
 import numpy as np
 from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import RBF
+from sklearn.gaussian_process.kernels import RBF, Matern
 
 
 class Player_MWU:  # Hedge algorithm (Freund and Schapire. 1997)
@@ -46,7 +46,7 @@ class Player_OPT_MWU:  # Hedge algorithm (Freund and Schapire. 1997)
 
 
 class Player_GPMW:
-    def __init__(self, K, T, N, sigma, all_action_profiles):
+    def __init__(self, K, T, N, sigma, all_action_profiles, payoff_matrix, kernel_optimization = False):
         self.type = "GPMW"
         self.K = K
         self.T = T
@@ -57,11 +57,14 @@ class Player_GPMW:
         self.beta_t = 2.0
         self.sigma = sigma
         self.kernel = RBF()
+        self.kernel_matrix = RBF.__call__(self.kernel, all_action_profiles)
         self.gpr = GaussianProcessRegressor(kernel=self.kernel, n_restarts_optimizer=10, alpha=sigma ** 2)
         self.mean_matrix = 0 * np.ones(K ** N)
         self.var_matrix = np.zeros(K ** N)
         self.all_action_profiles = all_action_profiles
-        self.kernel_matrix = RBF.__call__(RBF(), all_action_profiles)
+        if kernel_optimization:
+            self.gpr.fit(all_action_profiles, np.ndarray.flatten(payoff_matrix))
+            self.kernel = self.gpr.kernel_
         for idx in range(K**N):
             self.var_matrix[idx] = np.array(self.kernel_matrix[idx,idx])
         self.std_matrix = np.sqrt(self.var_matrix)
@@ -79,7 +82,7 @@ class Player_GPMW:
             mean_prediction = np.array(mean_prediction).reshape([self.K] * self.N)
             std_prediction = np.array(std_prediction).reshape([self.K] * self.N)
             self.UCB_Matrix = mean_prediction + self.beta_t * std_prediction
-        if 1:
+        else:
             self.UCB_Matrix = np.ndarray.flatten(self.UCB_Matrix)
             mean_matrix_prev = np.array(self.mean_matrix)
             var_matrix_prev = np.array(self.var_matrix)
@@ -116,7 +119,7 @@ class Player_GPMW:
 
 
 class Player_OPT_GPMW:
-    def __init__(self, K, T, N, sigma, all_action_profiles):
+    def __init__(self, K, T, N, sigma, all_action_profiles, payoff_matrix, kernel_optimization = False):
         self.type = "OPT_GPMW"
         self.K = K
         self.T = T
@@ -127,11 +130,18 @@ class Player_OPT_GPMW:
         self.beta_t = 2.0
         self.sigma = sigma
         self.kernel = RBF()
+        self.kernel_matrix = RBF.__call__(self.kernel, all_action_profiles)
+        # if kernel == 'matern':
+        #     self.kernel = 1.0 * Matern(length_scale=1.0, nu=1.5)
+        #     self.kernel_matrix = Matern.__call__(self.kernel, all_action_profiles)
         self.gpr = GaussianProcessRegressor(kernel=self.kernel, n_restarts_optimizer=10, alpha=sigma ** 2)
+        if kernel_optimization:
+            self.gpr.fit(all_action_profiles, np.ndarray.flatten(payoff_matrix))
+            self.kernel = self.gpr.kernel_
         self.mean_matrix = 0 * np.ones(K ** N)
         self.var_matrix = np.zeros(K ** N)
         self.all_action_profiles = all_action_profiles
-        self.kernel_matrix = RBF.__call__(RBF(), all_action_profiles)
+
         for idx in range(K**N):
             self.var_matrix[idx] = np.array(self.kernel_matrix[idx,idx])
         self.std_matrix = np.sqrt(self.var_matrix)

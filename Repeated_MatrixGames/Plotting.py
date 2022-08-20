@@ -5,7 +5,7 @@ import numpy as np
 markers = ['*', 'o', 'x', '^']
 
 
-def show(num):
+def show(str):
     with open('all.pckl', 'rb') as file:
         N = pickle.load(file)
         K = pickle.load(file)
@@ -41,8 +41,8 @@ def show(num):
     plt.xlabel('time')
     fig.tight_layout()
     plt.rcParams.update({'font.size': 14})
-    plt.savefig(f'result rate {rate} run {num}.png')
+    plt.savefig(f'result {str}.png')
     plt.show()
 
 
-show(1)
+show(4)
