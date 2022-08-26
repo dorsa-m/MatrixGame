@@ -7,7 +7,7 @@ from sklearn.gaussian_process.kernels import RBF
 
 N = 4  # number of players
 K = 3  # number of actions for each player
-T = 1000  # time horizon
+T = 500  # time horizon
 sigma = 1
 
 " Data to be saved (for post processing/plotting) "
@@ -20,6 +20,7 @@ class GameData:
         self.Obtained_payoffs = []
         self.History_GP_action = []
         self.History_GP_payoff = []
+        self.P1_variances = []
 
         self.Expected_regret = []
         self.Expected_Obtained_payoffs = []
@@ -36,7 +37,7 @@ def RunGame(N, K, T, A, sigma, types, optimize, max_var=False):
     for i in range(N):
         Game_data.Expected_Cum_payoffs.append(np.zeros(K))
         Game_data.Expected_payoff_to_update.append([np.zeros(K), np.zeros(
-            K)])  # for each player stores total expected payoff of each actions for (2) current and prev rounds
+            K)])  # for each player stores total expected payoff of each actions for 2 (current and prev) rounds
 
         if types[i] == 'MWU':
             Player[i] = Player_MWU(K, T)
@@ -101,8 +102,14 @@ def RunGame(N, K, T, A, sigma, types, optimize, max_var=False):
                     Game_data.History_GP_payoff[t][i] = Game_data.Obtained_payoffs[t][i]
                 else:
                     variances = Player[i].var_matrix.reshape([K] * N)
-                    Game_data.History_GP_action[t][i] = list(np.unravel_index(np.argmax(variances, axis=None), variances.shape))
-                    Game_data.History_GP_payoff[t][i] = np.max(variances)
+                    max_var_action = list(np.unravel_index(np.argmax(variances, axis=None), variances.shape))
+                    Game_data.History_GP_action[t][i] = max_var_action
+                    Game_data.History_GP_payoff[t][i] = Assign_payoffs(max_var_action, A[i])
+
+            # if i == 0:  #plot var for p_1
+            #     for i in range(0,K**N,N-1):
+            #         Game_data.P1_variances.append()
+
 
 
 
@@ -115,26 +122,23 @@ def RunGame(N, K, T, A, sigma, types, optimize, max_var=False):
                 Player[i].Update(Game_data.Expected_payoff_to_update[i][1],
                                  Game_data.Expected_payoff_to_update[i][0], t, N)
 
-            if Player[i].type == "GPMW":
+            if Player[i].type == "GPMW" or Player[i].type == "OPT_GPMW":
                 if max_var:
                     history_actions = np.array([Game_data.History_GP_action[x][i] for x in range(t + 1)])
                     history_payoffs = np.array([Game_data.History_GP_payoff[x][i] + noises[x] for x in range(t + 1)])
                 else:
                     history_actions = np.array([Game_data.Played_actions[x] for x in range(t + 1)])
                     history_payoffs = np.array([Game_data.Obtained_payoffs[x][i] + noises[x] for x in range(t + 1)])
-                Player[i].GP_update(history_actions, history_payoffs, t)
-                Player[i].Update(Game_data.Expected_payoff_to_update[i][1], t)
 
-            if Player[i].type == "OPT_GPMW":
-                if max_var:
-                    history_actions = np.array([Game_data.History_GP_action[x][i] for x in range(t + 1)])
-                    history_payoffs = np.array([Game_data.History_GP_payoff[x][i] + noises[x] for x in range(t + 1)])
-                else:
-                    history_actions = np.array([Game_data.Played_actions[x] for x in range(t + 1)])
-                    history_payoffs = np.array([Game_data.Obtained_payoffs[x][i] + noises[x] for x in range(t + 1)])
-                Player[i].GP_update(history_actions, history_payoffs)
-                Player[i].Update(Game_data.Expected_payoff_to_update[i][1],
-                                 Game_data.Expected_payoff_to_update[i][0], t, N)
+                if Player[i].type == "GPMW":
+                    Player[i].GP_update(history_actions, history_payoffs)
+                    Player[i].Update(Game_data.Expected_payoff_to_update[i][1], t)
+
+                if Player[i].type == "OPT_GPMW":
+                    Player[i].GP_update(history_actions, history_payoffs)
+                    Player[i].Update(Game_data.Expected_payoff_to_update[i][1],
+                                     Game_data.Expected_payoff_to_update[i][0], t, N)
+
     return Game_data, Player
 
 
@@ -161,7 +165,8 @@ def Generate_A(K):
 
 " --------------------------------- Begin Simulations --------------------------------- "
 
-Runs = 10
+simulations = 5
+runs = 5
 
 # N_types = [['MWU'] * N, ['OPT_MWU'] * N, ['GPMW'] * N, ['OPT_GPMW'] * N]
 N_types = [['GPMW'] * N, ['OPT_GPMW'] * N]
@@ -171,41 +176,43 @@ std_expected_Regrets_all = []
 avg_expected_Regrets_worst = []
 std_expected_Regrets_worst = []
 
+np.random.seed(4)
+
 A_all = []
-for run in range(Runs):
-    if run % 1 == 0:
-        A = []
-        for j in range(N):
-            A.append(Generate_A(K))
-            # A.append()
+for sim in range(simulations):     # determines each payoff matrix is run for how many times
+    A = []
+    for j in range(N):
+        A.append(Generate_A(K))
     A_all.append(A)
 
 # with open('payoffs.pckl', 'rb') as file:
 #     A_all = pickle.load(file)
 
-np.random.seed(12)
-for i in range(len(N_types)):
-    e_Regrets_all = [None] * Runs
-    e_Regrets_worst = [None] * Runs
-    for run in range(Runs):
-        Games_data, Player = RunGame(N, K, T, A_all[run], sigma, N_types[i], max_var= True, optimize= False)
+# np.random.seed(12)
 
-        # finding player with max regret
-        ind_worst_e = 0
-        s_e = 0
-        for ind in range(N):
-            if Games_data.Expected_regret[T - 1][ind] > s_e:
-                ind_worst_e = ind
-                s_e = Games_data.Expected_regret[T - 1][ind]
-        e_Regrets_all[run] = np.array([np.mean([Games_data.Expected_regret[x][i] for i in range(N)]) for x in range(T)])
-        e_Regrets_worst[run] = np.array([Games_data.Expected_regret[x][ind_worst_e] for x in range(T)])
-        print(f'run {run}')
+for i in range(len(N_types)):
+    e_Regrets_all = []
+    e_Regrets_worst = []
+    for sim in range(simulations):
+        for run in range(runs):
+            Games_data, Player = RunGame(N, K, T, A_all[sim], sigma, N_types[i], max_var= True, optimize= False)
+
+            # finding player with max regret
+            ind_worst_e = 0
+            s_e = 0
+            for ind in range(N):
+                if Games_data.Expected_regret[T - 1][ind] > s_e:
+                    ind_worst_e = ind
+                    s_e = Games_data.Expected_regret[T - 1][ind]
+            e_Regrets_all.append(np.array([np.mean([Games_data.Expected_regret[x][i] for i in range(N)]) for x in range(T)]))
+            e_Regrets_worst.append(np.array([Games_data.Expected_regret[x][ind_worst_e] for x in range(T)]))
+            print(f'sim{sim}, run {run}')
 
     avg_expected_Regrets_all.append(np.mean(e_Regrets_all, 0))
     std_expected_Regrets_all.append(np.std(e_Regrets_all, 0))
     avg_expected_Regrets_worst.append(np.mean(e_Regrets_worst, 0))
     std_expected_Regrets_worst.append(np.std(e_Regrets_worst, 0))
-    rate = Player[0].gamma_t
+    # rate = Player[0].gamma_t
 
 with open('all.pckl', 'wb') as file:
     pickle.dump(N, file)
@@ -215,6 +222,7 @@ with open('all.pckl', 'wb') as file:
     pickle.dump(std_expected_Regrets_all, file)
     pickle.dump(avg_expected_Regrets_worst, file)
     pickle.dump(std_expected_Regrets_worst, file)
-    pickle.dump(rate, file)
+    # pickle.dump(rate, file)
+
 with open('payoffs.pckl', 'wb') as file:
     pickle.dump(A_all, file)

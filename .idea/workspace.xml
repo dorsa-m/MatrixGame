@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="20962396-7ee2-4c8b-97ab-747f4d1da71d" name="Default Changelist" comment="optimization added">
+    <list default="true" id="20962396-7ee2-4c8b-97ab-747f4d1da71d" name="Default Changelist" comment="max var fixed">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Repeated_MatrixGames/Plotting.py" beforeDir="false" afterPath="$PROJECT_DIR$/Repeated_MatrixGames/Plotting.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Repeated_MatrixGames/Repeated_matrix_games.py" beforeDir="false" afterPath="$PROJECT_DIR$/Repeated_MatrixGames/Repeated_matrix_games.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Repeated_MatrixGames/all.pckl" beforeDir="false" afterPath="$PROJECT_DIR$/Repeated_MatrixGames/all.pckl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Repeated_MatrixGames/aux_functions.py" beforeDir="false" afterPath="$PROJECT_DIR$/Repeated_MatrixGames/aux_functions.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Repeated_MatrixGames/payoffs.pckl" beforeDir="false" afterPath="$PROJECT_DIR$/Repeated_MatrixGames/payoffs.pckl" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -26,7 +28,7 @@
     <property name="last_opened_file_path" value="$PROJECT_DIR$/../noregretgames" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
-  <component name="RunManager" selected="Python.Repeated_matrix_games">
+  <component name="RunManager" selected="Python.Plotting">
     <configuration name="Plotting" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="MatrixGame" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -91,8 +93,8 @@
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.Repeated_matrix_games" />
         <item itemvalue="Python.Plotting" />
+        <item itemvalue="Python.Repeated_matrix_games" />
         <item itemvalue="Python.aux_functions" />
       </list>
     </recent_temporary>
@@ -155,7 +157,14 @@
       <option name="project" value="LOCAL" />
       <updated>1661026691758</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="max var fixed">
+      <created>1661034760048</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1661034760048</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -178,6 +187,7 @@
     <MESSAGE value="new run" />
     <MESSAGE value="all + recursive" />
     <MESSAGE value="optimization added" />
-    <option name="LAST_COMMIT_MESSAGE" value="optimization added" />
+    <MESSAGE value="max var fixed" />
+    <option name="LAST_COMMIT_MESSAGE" value="max var fixed" />
   </component>
 </project>

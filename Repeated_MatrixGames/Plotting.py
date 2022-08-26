@@ -14,7 +14,7 @@ def show(str):
         std_expected_Regrets_all = pickle.load(file)
         avg_expected_Regrets_worst = pickle.load(file)
         std_expected_Regrets_worst = pickle.load(file)
-        rate = pickle.load(file)
+        # rate = pickle.load(file)
 
     T = len(avg_expected_Regrets_all[0])
 
