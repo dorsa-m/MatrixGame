@@ -6,8 +6,8 @@ from aux_functions import Assign_payoffs, Player_MWU, Player_GPMW, Player_OPT_MW
 from sklearn.gaussian_process.kernels import RBF
 
 N = 4  # number of players
-K = 3  # number of actions for each player
-T = 200  # time horizon
+K = 5  # number of actions for each player
+T = 400  # time horizon
 sigma = 1
 
 " Data to be saved (for post processing/plotting) "
@@ -168,11 +168,16 @@ def Generate_A(K):
 
 " --------------------------------- Begin Simulations --------------------------------- "
 
-simulations = 5
-runs = 2
+simulations = 15
+runs = 5
 
-# N_types = [['MWU'] * N, ['OPT_MWU'] * N, ['GPMW'] * N, ['OPT_GPMW'] * N]
-N_types = [['GPMW'] * N, ['OPT_GPMW'] * N, ['EXP3']*N, ['OPT_EXP3']*N]
+N_types = []
+# N_types.append(['MWU'] * N)
+# N_types.append(['OPT_MWU'] * N)
+# N_types.append(['GPMW'] * N)
+# N_types.append(['OPT_GPMW'] * N)
+N_types.append(['EXP3']*N)
+N_types.append(['OPT_EXP3']*N)
 
 avg_expected_Regrets_all = []
 std_expected_Regrets_all = []
@@ -181,15 +186,15 @@ std_expected_Regrets_worst = []
 
 np.random.seed(4)
 
-A_all = []
-for sim in range(simulations):     # determines each payoff matrix is run for how many times
-    A = []
-    for j in range(N):
-        A.append(Generate_A(K))
-    A_all.append(A)
+# A_all = []
+# for sim in range(simulations):
+#     A = []
+#     for j in range(N):
+#         A.append(Generate_A(K))
+#     A_all.append(A)
 
-# with open('payoffs.pckl', 'rb') as file:
-#     A_all = pickle.load(file)
+with open('payoffs.pckl', 'rb') as file:
+    A_all = pickle.load(file)
 
 # np.random.seed(12)
 
@@ -198,7 +203,7 @@ for i in range(len(N_types)):
     e_Regrets_worst = []
     for sim in range(simulations):
         for run in range(runs):
-            Games_data, Player = RunGame(N, K, T, A_all[sim], sigma, N_types[i], max_var= True, optimize= False)
+            Games_data, Player = RunGame(N, K, T, A_all[sim], sigma, N_types[i], max_var= False, optimize= False)
 
             # finding player with max regret
             ind_worst_e = 0
