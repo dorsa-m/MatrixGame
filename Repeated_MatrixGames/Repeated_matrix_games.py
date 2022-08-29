@@ -1,13 +1,13 @@
 import numpy as np
 import pickle
 from tqdm import tqdm
-from aux_functions import Assign_payoffs, Player_MWU, Player_GPMW, Player_OPT_MWU, Player_OPT_GPMW, joint_dist, \
+from aux_functions import Assign_payoffs, Player_MWU, Player_GPMW, Player_OPT_MWU, Player_OPT_GPMW, Player_EXP3, Player_OPT_EXP3, joint_dist, \
     get_combinations
 from sklearn.gaussian_process.kernels import RBF
 
 N = 4  # number of players
 K = 3  # number of actions for each player
-T = 500  # time horizon
+T = 200  # time horizon
 sigma = 1
 
 " Data to be saved (for post processing/plotting) "
@@ -20,7 +20,6 @@ class GameData:
         self.Obtained_payoffs = []
         self.History_GP_action = []
         self.History_GP_payoff = []
-        self.P1_variances = []
 
         self.Expected_regret = []
         self.Expected_Obtained_payoffs = []
@@ -29,7 +28,7 @@ class GameData:
 
 
 def RunGame(N, K, T, A, sigma, types, optimize, max_var=False):
-    noises = np.random.normal(0, sigma, T)
+    noises = np.random.normal(0, sigma, size=[N, T])
     Game_data = GameData()
     all_action_profiles = get_combinations(tuple([K] * N))
 
@@ -47,6 +46,10 @@ def RunGame(N, K, T, A, sigma, types, optimize, max_var=False):
             Player[i] = Player_GPMW(K, T, N, sigma, all_action_profiles, A[i], optimize)
         if types[i] == 'OPT_GPMW':
             Player[i] = Player_OPT_GPMW(K, T, N, sigma, all_action_profiles, A[i], optimize)
+        if types[i] == 'EXP3':
+            Player[i] = Player_EXP3(K,T)
+        if types[i] == 'OPT_EXP3':
+            Player[i] = Player_OPT_EXP3(K,T)
 
     " Repated Game "
     for t in tqdm(range(T)):
@@ -106,10 +109,6 @@ def RunGame(N, K, T, A, sigma, types, optimize, max_var=False):
                     Game_data.History_GP_action[t][i] = max_var_action
                     Game_data.History_GP_payoff[t][i] = Assign_payoffs(max_var_action, A[i])
 
-            # if i == 0:  #plot var for p_1
-            #     for i in range(0,K**N,N-1):
-            #         Game_data.P1_variances.append()
-
 
 
 
@@ -125,10 +124,10 @@ def RunGame(N, K, T, A, sigma, types, optimize, max_var=False):
             if Player[i].type == "GPMW" or Player[i].type == "OPT_GPMW":
                 if max_var:
                     history_actions = np.array([Game_data.History_GP_action[x][i] for x in range(t + 1)])
-                    history_payoffs = np.array([Game_data.History_GP_payoff[x][i] + noises[x] for x in range(t + 1)])
+                    history_payoffs = np.array([Game_data.History_GP_payoff[x][i] + noises[i][x] for x in range(t + 1)])
                 else:
                     history_actions = np.array([Game_data.Played_actions[x] for x in range(t + 1)])
-                    history_payoffs = np.array([Game_data.Obtained_payoffs[x][i] + noises[x] for x in range(t + 1)])
+                    history_payoffs = np.array([Game_data.Obtained_payoffs[x][i] + noises[i][x] for x in range(t + 1)])
 
                 if Player[i].type == "GPMW":
                     Player[i].GP_update(history_actions, history_payoffs)
@@ -138,6 +137,10 @@ def RunGame(N, K, T, A, sigma, types, optimize, max_var=False):
                     Player[i].GP_update(history_actions, history_payoffs)
                     Player[i].Update(Game_data.Expected_payoff_to_update[i][1],
                                      Game_data.Expected_payoff_to_update[i][0], t, N)
+
+            if Player[i].type == "EXP3" or Player[i].type == "OPT_EXP3":
+                noisy_payoff = Game_data.Obtained_payoffs[t][i] + np.random.normal(0, sigma, 1)
+                Player[i].Update(Game_data.Played_actions[t][i], noisy_payoff)
 
     return Game_data, Player
 
@@ -166,10 +169,10 @@ def Generate_A(K):
 " --------------------------------- Begin Simulations --------------------------------- "
 
 simulations = 5
-runs = 5
+runs = 2
 
 # N_types = [['MWU'] * N, ['OPT_MWU'] * N, ['GPMW'] * N, ['OPT_GPMW'] * N]
-N_types = [['GPMW'] * N, ['OPT_GPMW'] * N]
+N_types = [['GPMW'] * N, ['OPT_GPMW'] * N, ['EXP3']*N, ['OPT_EXP3']*N]
 
 avg_expected_Regrets_all = []
 std_expected_Regrets_all = []

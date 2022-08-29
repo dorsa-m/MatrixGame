@@ -137,6 +137,50 @@ class Player_OPT_GPMW(Parent_GPMW):
         losses = 2 * loss_t - loss_t_1
         super().semi_Update(losses)
 
+class Parent_EXP3p:
+    def __init__(self, K, T):
+        self.K = K
+        self.T = T
+        self.weights = np.ones(K)
+        self.rewards_est = [np.zeros(K), np.zeros(K)]
+        delta = 0.01
+        self.beta = np.sqrt(np.log(self.K * (1 / delta)) / (self.T * self.K))
+        self.gamma = 1.05 * np.sqrt(np.log(self.K) * self.K / self.T)
+        self.eta = 0.95 * np.sqrt(np.log(self.K) / (self.T * self.K))
+        assert self.beta > 0 and self.beta < 1 and self.gamma > 0 and self.gamma < 1
+
+    def mixed_strategy(self):
+        return self.weights / np.sum(self.weights)
+
+    def semi_Update(self, played_a, payoff):
+        prob_played_action = self.weights[played_a] / np.sum(self.weights)
+        self.rewards_est.pop(0)
+        reward_est_new = self.rewards_est[0]
+        reward_est_new = reward_est_new + self.beta * np.divide(np.ones(self.K),
+                                                                    self.weights / np.sum(self.weights))
+        reward_est_new[played_a] = reward_est_new[played_a] + payoff / prob_played_action
+        self.rewards_est.append(reward_est_new)
+
+class Player_EXP3(Parent_EXP3p):
+    def __init__(self, K, T):
+        super().__init__(K, T)
+        self.type = 'EXP3'
+    def Update(self, played_a, payoff):
+        super().semi_Update(played_a, payoff)
+        self.weights = np.exp(np.multiply(self.eta, self.rewards_est[1]))
+        self.weights = self.weights / np.sum(self.weights)
+        self.weights = (1 - self.gamma) * self.weights + self.gamma / self.K * np.ones(self.K)
+
+
+class Player_OPT_EXP3(Parent_EXP3p):
+    def __init__(self, K, T):
+        super().__init__(K, T)
+        self.type = 'OPT_EXP3'
+    def Update(self, played_a, payoff):
+        super().semi_Update(played_a, payoff)
+        self.weights = np.exp(np.multiply(self.eta, 2*self.rewards_est[1]-self.rewards_est[0]))
+        self.weights = self.weights / np.sum(self.weights)
+        self.weights = (1 - self.gamma) * self.weights + self.gamma / self.K * np.ones(self.K)
 
 def Assign_payoffs(outcome, payoff_matrix):
     return np.squeeze(payoff_matrix[tuple(outcome)])
