@@ -6,8 +6,8 @@ from aux_functions import Assign_payoffs, Player_MWU, Player_GPMW, Player_OPT_MW
 from sklearn.gaussian_process.kernels import RBF
 
 N = 4  # number of players
-K = 5  # number of actions for each player
-T = 400  # time horizon
+K = 3  # number of actions for each player
+T = 300  # time horizon
 sigma = 1
 
 " Data to be saved (for post processing/plotting) "
@@ -186,15 +186,15 @@ std_expected_Regrets_worst = []
 
 np.random.seed(4)
 
-# A_all = []
-# for sim in range(simulations):
-#     A = []
-#     for j in range(N):
-#         A.append(Generate_A(K))
-#     A_all.append(A)
+A_all = []
+for sim in range(simulations):
+    A = []
+    for j in range(N):
+        A.append(Generate_A(K))
+    A_all.append(A)
 
-with open('payoffs.pckl', 'rb') as file:
-    A_all = pickle.load(file)
+# with open('payoffs.pckl', 'rb') as file:
+#     A_all = pickle.load(file)
 
 # np.random.seed(12)
 
@@ -203,7 +203,7 @@ for i in range(len(N_types)):
     e_Regrets_worst = []
     for sim in range(simulations):
         for run in range(runs):
-            Games_data, Player = RunGame(N, K, T, A_all[sim], sigma, N_types[i], max_var= False, optimize= False)
+            Games_data, Player = RunGame(N, K, T, A_all[sim], sigma, N_types[i], max_var= True, optimize= False)
 
             # finding player with max regret
             ind_worst_e = 0

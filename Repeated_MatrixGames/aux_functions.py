@@ -137,7 +137,7 @@ class Player_OPT_GPMW(Parent_GPMW):
         losses = 2 * loss_t - loss_t_1
         super().semi_Update(losses)
 
-class Parent_EXP3p:
+class Parent_EXP3:
     def __init__(self, K, T):
         self.K = K
         self.T = T
@@ -153,34 +153,31 @@ class Parent_EXP3p:
         return self.weights / np.sum(self.weights)
 
     def semi_Update(self, played_a, payoff):
-        prob_played_action = self.weights[played_a] / np.sum(self.weights)
+        prob_played_action = (1 - self.gamma)*(self.weights[played_a] / np.sum(self.weights)) + (self.gamma / self.K)
+        reward_est_new = np.zeros(self.K)
+        reward_est_new[played_a] = payoff / prob_played_action
         self.rewards_est.pop(0)
-        reward_est_new = self.rewards_est[0]
-        reward_est_new = reward_est_new + self.beta * np.divide(np.ones(self.K),
-                                                                    self.weights / np.sum(self.weights))
-        reward_est_new[played_a] = reward_est_new[played_a] + payoff / prob_played_action
         self.rewards_est.append(reward_est_new)
 
-class Player_EXP3(Parent_EXP3p):
+class Player_EXP3(Parent_EXP3):
     def __init__(self, K, T):
         super().__init__(K, T)
         self.type = 'EXP3'
     def Update(self, played_a, payoff):
         super().semi_Update(played_a, payoff)
-        self.weights = np.exp(np.multiply(self.eta, self.rewards_est[1]))
+        self.weights = np.multiply(self.weights, np.exp((-self.eta * self.rewards_est[1])/self.K))
         self.weights = self.weights / np.sum(self.weights)
-        self.weights = (1 - self.gamma) * self.weights + self.gamma / self.K * np.ones(self.K)
 
 
-class Player_OPT_EXP3(Parent_EXP3p):
+class Player_OPT_EXP3(Parent_EXP3):
     def __init__(self, K, T):
         super().__init__(K, T)
         self.type = 'OPT_EXP3'
     def Update(self, played_a, payoff):
         super().semi_Update(played_a, payoff)
-        self.weights = np.exp(np.multiply(self.eta, 2*self.rewards_est[1]-self.rewards_est[0]))
+        opt_reward_estimate = 2*self.rewards_est[1] - self.rewards_est[0]
+        self.weights = np.multiply(self.weights, np.exp((-self.eta * opt_reward_estimate)/self.K))
         self.weights = self.weights / np.sum(self.weights)
-        self.weights = (1 - self.gamma) * self.weights + self.gamma / self.K * np.ones(self.K)
 
 def Assign_payoffs(outcome, payoff_matrix):
     return np.squeeze(payoff_matrix[tuple(outcome)])

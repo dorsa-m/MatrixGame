@@ -45,4 +45,4 @@ def show(str):
     plt.show()
 
 
-show('EXP3 vs OPT_EXP3')
+show('test77')
