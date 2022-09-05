@@ -26,6 +26,7 @@ class Player_MWU(Parent_MWU):  # Hedge algorithm (Freund and Schapire. 1997)
 
     def Update(self, payoffs, t):
         # self.gamma_t = 1/np.sqrt(t+1)
+        payoffs = normalize(payoffs, payoffs.min(), payoffs.max())
         losses = np.ones(self.K) - np.array(payoffs)
         super().semi_Update(losses)
 
@@ -37,6 +38,8 @@ class Player_OPT_MWU(Parent_MWU):  # Optimistic Hedge algorithm
 
     def Update(self, payoffs_t, payoffs_t_1, t, N):
         # self.gamma_t = 1 / (N * np.log(t + 2) ** 4)
+        payoffs_t = normalize(payoffs_t, payoffs_t.min(), payoffs_t.max())
+        payoffs_t_1 = normalize(payoffs_t_1, payoffs_t_1.min(), payoffs_t_1.max())
         loss_t = np.ones(self.K) - payoffs_t
         loss_t_1 = np.ones(self.K) - payoffs_t_1
         losses = 2 * loss_t - loss_t_1
@@ -121,6 +124,7 @@ class Player_GPMW(Parent_GPMW):
 
     def Update(self, payoffs, t):
         # self.gamma_t = np.sqrt(8*np.log(K)/t)
+        payoffs = normalize(payoffs, payoffs.min(), payoffs.max())
         losses = np.ones(self.K) - np.array(payoffs)
         super().semi_Update(losses)
 
@@ -132,6 +136,8 @@ class Player_OPT_GPMW(Parent_GPMW):
 
     def Update(self, payoffs_t, payoffs_t_1, t, N):
         # self.gamma_t = np.sqrt(8*np.log(K)/t)
+        payoffs_t = normalize(payoffs_t, payoffs_t.min(), payoffs_t.max())
+        payoffs_t_1 = normalize(payoffs_t_1, payoffs_t_1.min(), payoffs_t_1.max())
         loss_t = np.ones(self.K) - payoffs_t
         loss_t_1 = np.ones(self.K) - payoffs_t_1
         losses = 2 * loss_t - loss_t_1
@@ -143,11 +149,12 @@ class Parent_EXP3:
         self.T = T
         self.weights = np.ones(K)
         self.rewards_est = [np.zeros(K), np.zeros(K)]
-        delta = 0.01
-        self.beta = np.sqrt(np.log(self.K * (1 / delta)) / (self.T * self.K))
-        self.gamma = 1.05 * np.sqrt(np.log(self.K) * self.K / self.T)
-        self.eta = 0.95 * np.sqrt(np.log(self.K) / (self.T * self.K))
-        assert self.beta > 0 and self.beta < 1 and self.gamma > 0 and self.gamma < 1
+        # self.gamma = 1.05 * np.sqrt(np.log(self.K) * self.K / self.T)
+        self.gamma = 0.01
+        # delta = 0.01
+        # self.beta = np.sqrt(np.log(self.K * (1 / delta)) / (self.T * self.K))
+        # self.eta = 0.95 * np.sqrt(np.log(self.K) / (self.T * self.K))
+        # assert self.beta > 0 and self.beta < 1 and self.gamma > 0 and self.gamma < 1
 
     def mixed_strategy(self):
         return self.weights / np.sum(self.weights)
@@ -164,8 +171,9 @@ class Player_EXP3(Parent_EXP3):
         super().__init__(K, T)
         self.type = 'EXP3'
     def Update(self, played_a, payoff):
+        payoff = normalize(payoff, payoff.min(), payoff.max())
         super().semi_Update(played_a, payoff)
-        self.weights = np.multiply(self.weights, np.exp((-self.eta * self.rewards_est[1])/self.K))
+        self.weights = np.multiply(self.weights, np.exp((-self.gamma * self.rewards_est[1])/self.K))
         self.weights = self.weights / np.sum(self.weights)
 
 
@@ -174,9 +182,10 @@ class Player_OPT_EXP3(Parent_EXP3):
         super().__init__(K, T)
         self.type = 'OPT_EXP3'
     def Update(self, played_a, payoff):
+        payoff = normalize(payoff, payoff.min(), payoff.max())
         super().semi_Update(played_a, payoff)
         opt_reward_estimate = 2*self.rewards_est[1] - self.rewards_est[0]
-        self.weights = np.multiply(self.weights, np.exp((-self.eta * opt_reward_estimate)/self.K))
+        self.weights = np.multiply(self.weights, np.exp((-self.gamma * opt_reward_estimate)/self.K))
         self.weights = self.weights / np.sum(self.weights)
 
 def Assign_payoffs(outcome, payoff_matrix):
@@ -197,3 +206,14 @@ def joint_dist(Mixed_strategies, K):
 def get_combinations(params):
     all_indices = np.indices(params)
     return np.moveaxis(all_indices, 0, -1).reshape(-1, len(params))
+
+def normalize_util(payoffs, min_payoff, max_payoff):
+    if min_payoff == max_payoff:
+        return payoffs
+    payoff_range = max_payoff - min_payoff
+    payoffs = np.maximum(payoffs, min_payoff)
+    payoffs = np.minimum(payoffs, max_payoff)
+    payoffs_scaled = (payoffs - min_payoff) / payoff_range
+    return payoffs_scaled
+
+normalize = np.vectorize(normalize_util)

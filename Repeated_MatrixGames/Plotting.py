@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import pickle
 import numpy as np
 
-markers = ['*', 'o', 'x', '^']
+markers = ['*', '*', 'o', 'o', 'x', 'x', '^', '^']
 
 
 def show(str):
