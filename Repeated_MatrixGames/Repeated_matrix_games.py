@@ -1,14 +1,12 @@
 import numpy as np
 import pickle
 from tqdm import tqdm
-from aux_functions import Assign_payoffs, Player_MWU, Player_GPMW, Player_OPT_MWU, Player_OPT_GPMW, Player_EXP3, \
-    Player_OPT_EXP3, joint_dist, \
-    get_combinations, normalize
+from aux_functions import Assign_payoffs, Player_MWU, Player_GPMW, Player_OPT_MWU, Player_OPT_GPMW, Player_EXP3, Player_OPT_EXP3, joint_dist, get_combinations
 from sklearn.gaussian_process.kernels import RBF
 
 N = 4  # number of players
-K = 3  # number of actions for each player
-T = 100  # time horizon
+K = 5  # number of actions for each player
+T = 500  # time horizon
 sigma = 1
 
 " Data to be saved (for post processing/plotting) "
@@ -32,7 +30,7 @@ class GameData:
         self.history_p = []
 
 
-def RunGame(N, K, T, A, sigma, types, optimize, max_var=False):
+def RunGame(N, K, T, A, sigma, types, optimize=True, max_var=False, test=False):
     noises = np.random.normal(0, sigma, size=[N, T])
     Game_data = GameData()
     all_action_profiles = get_combinations(tuple([K] * N))
@@ -47,18 +45,21 @@ def RunGame(N, K, T, A, sigma, types, optimize, max_var=False):
         Game_data.history.append([] * N)
         Game_data.history_p.append([] * N)
 
+        min_payoff = A[i].min()
+        max_payoff = A[i].max()
+
         if types[i] == 'MWU':
-            Player[i] = Player_MWU(K, T)
+            Player[i] = Player_MWU(K, T, N, min_payoff, max_payoff)
         if types[i] == 'OPT_MWU':
-            Player[i] = Player_OPT_MWU(K, T)
+            Player[i] = Player_OPT_MWU(K, T, N, min_payoff, max_payoff)
         if types[i] == 'GPMW':
-            Player[i] = Player_GPMW(K, T, N, sigma, all_action_profiles, A[i], optimize)
+            Player[i] = Player_GPMW(K, T, N, min_payoff, max_payoff, sigma, all_action_profiles, A[i], optimize)
         if types[i] == 'OPT_GPMW':
-            Player[i] = Player_OPT_GPMW(K, T, N, sigma, all_action_profiles, A[i], optimize)
+            Player[i] = Player_OPT_GPMW(K, T, N, min_payoff, max_payoff, sigma, all_action_profiles, A[i], optimize)
         if types[i] == 'EXP3':
-            Player[i] = Player_EXP3(K, T)
+            Player[i] = Player_EXP3(K, T, min_payoff, max_payoff)
         if types[i] == 'OPT_EXP3':
-            Player[i] = Player_OPT_EXP3(K, T)
+            Player[i] = Player_OPT_EXP3(K, T, min_payoff, max_payoff)
 
     " Repated Game "
     for t in tqdm(range(T)):
@@ -101,7 +102,6 @@ def RunGame(N, K, T, A, sigma, types, optimize, max_var=False):
                 Game_data.Expected_payoff_to_update[i].append(np.array(predicted_expected_payoff_all_actions))
             else:
                 Game_data.Expected_payoff_to_update[i].append(np.array(expected_payoff_all_actions))
-
             Game_data.Expected_Obtained_payoffs[t][i] = np.dot(np.array(expected_payoff_all_actions),
                                                                np.array(Game_data.Mixed_strategies[t][i]))
 
@@ -128,11 +128,11 @@ def RunGame(N, K, T, A, sigma, types, optimize, max_var=False):
         " Update players next mixed strategy "
         for i in range(N):
             if Player[i].type == "MWU":
-                Player[i].Update(Game_data.Expected_payoff_to_update[i][1], t)
+                Player[i].Update(Game_data.Expected_payoff_to_update[i][1])
 
             if Player[i].type == "OPT_MWU":
                 Player[i].Update(Game_data.Expected_payoff_to_update[i][1],
-                                 Game_data.Expected_payoff_to_update[i][0], t, N)
+                                 Game_data.Expected_payoff_to_update[i][0])
 
             if Player[i].type == "GPMW" or Player[i].type == "OPT_GPMW":
                 if max_var:
@@ -143,23 +143,23 @@ def RunGame(N, K, T, A, sigma, types, optimize, max_var=False):
                     history_payoffs = np.array([Game_data.Obtained_payoffs[x][i] + noises[i][x] for x in range(t + 1)])
 
                 if Player[i].type == "GPMW":
-                    if 0:
+                    if test:
                         # test
-                        Player[i].GP_update(Game_data.history[i][:-1], Game_data.history_p[i][:-1])
-                        Player[i].GP_update(Game_data.history[i], Game_data.history_p[i])
+                        # Player[i].GP_update(Game_data.history[i][:-1], Game_data.history_p[i][:-1])
+                        Player[i].GP_update(Game_data.history[i], Game_data.history_p[i], False)
                     else:
-                        Player[i].GP_update(history_actions, history_payoffs)
-                        Player[i].Update(Game_data.Expected_payoff_to_update[i][1], t)
+                        Player[i].GP_update(history_actions, history_payoffs, True)
+                    Player[i].Update(Game_data.Expected_payoff_to_update[i][1])
 
                 if Player[i].type == "OPT_GPMW":
-                    if 0:
+                    if test:
                         # test
-                        Player[i].GP_update(Game_data.history[i][:-1], Game_data.history_p[i][:-1])
-                        Player[i].GP_update(Game_data.history[i], Game_data.history_p[i])
+                        # Player[i].GP_update(Game_data.history[i][:-1], Game_data.history_p[i][:-1])
+                        Player[i].GP_update(Game_data.history[i], Game_data.history_p[i], False)
                     else:
-                        Player[i].GP_update(history_actions, history_payoffs)
-                        Player[i].Update(Game_data.Expected_payoff_to_update[i][1],
-                                         Game_data.Expected_payoff_to_update[i][0], t, N)
+                        Player[i].GP_update(history_actions, history_payoffs, True)
+                    Player[i].Update(Game_data.Expected_payoff_to_update[i][1],
+                                         Game_data.Expected_payoff_to_update[i][0])
 
             if Player[i].type == "EXP3" or Player[i].type == "OPT_EXP3":
                 noisy_payoff = Game_data.Obtained_payoffs[t][i] + np.random.normal(0, sigma, 1)
@@ -191,16 +191,16 @@ def Generate_A(K, N, smooth=True):
 
 " --------------------------------- Begin Simulations --------------------------------- "
 
-simulations = 3
-runs = 2
+simulations = 20
+runs = 6
 
 N_types = []
-N_types.append(['MWU'] * N)
-N_types.append(['OPT_MWU'] * N)
+# N_types.append(['MWU'] * N)
+# N_types.append(['OPT_MWU'] * N)
 N_types.append(['GPMW'] * N)
 N_types.append(['OPT_GPMW'] * N)
-N_types.append(['EXP3']*N)
-N_types.append(['OPT_EXP3']*N)
+# N_types.append(['EXP3'] * N)
+# N_types.append(['OPT_EXP3'] * N)
 
 avg_expected_Regrets_all = []
 std_expected_Regrets_all = []
@@ -213,20 +213,20 @@ A_all = []
 for sim in range(simulations):
     A = []
     for j in range(N):
-        A.append(Generate_A(K, N))
+        A.append(Generate_A(K, N, True))
     A_all.append(A)
 
 # with open('payoffs.pckl', 'rb') as file:
 #     A_all = pickle.load(file)
 
-np.random.seed(12)
+# np.random.seed(12)
 
 for i in range(len(N_types)):
     e_Regrets_all = []
     e_Regrets_worst = []
     for sim in range(simulations):
         for run in range(runs):
-            Games_data, Player = RunGame(N, K, T, A_all[sim], sigma, N_types[i], max_var=True, optimize=False)
+            Games_data, Player = RunGame(N, K, T, A_all[sim], sigma, N_types[i], max_var=False, optimize=False, test=False)
 
             # finding player with max regret
             ind_worst_e = 0

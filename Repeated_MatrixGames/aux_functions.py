@@ -1,13 +1,19 @@
 import numpy as np
 from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import RBF, Matern
+from sklearn.gaussian_process.kernels import RBF
 
 
 class Parent_MWU:
-    def __init__(self, K, T):
+    def __init__(self, K, T, N, min_payoff, max_payoff):
         self.K = K
         self.weights = np.ones(K)
         self.T = T
+        self.N = N
+        self.min_payoff = min_payoff
+        self.max_payoff = max_payoff
+        # learning rate from Fast Convergence of Regularized Learning in Games [Syrgkanis et al. 2015]
+        # self.gamma_t = 0.1
+        # This learning rate works better in practice
         self.gamma_t = 1
 
     def mixed_strategy(self):
@@ -20,51 +26,63 @@ class Parent_MWU:
 
 
 class Player_MWU(Parent_MWU):  # Hedge algorithm (Freund and Schapire. 1997)
-    def __init__(self, K, T):
-        super().__init__(K, T)
+    def __init__(self, K, T, N, min_payoff, max_payoff):
+        super().__init__(K, T, N, min_payoff, max_payoff)
         self.type = "MWU"
+        # adversarial hedge learning rate
+        # self.gamma_t = np.sqrt(np.log(self.K) / self.T)
 
-    def Update(self, payoffs, t):
-        # self.gamma_t = 1/np.sqrt(t+1)
-        payoffs = normalize(payoffs, payoffs.min(), payoffs.max())
+    def Update(self, payoffs):
+        payoffs = normalize(payoffs, self.min_payoff, self.max_payoff)
         losses = np.ones(self.K) - np.array(payoffs)
+        # print('vanilla', losses)
         super().semi_Update(losses)
 
 
 class Player_OPT_MWU(Parent_MWU):  # Optimistic Hedge algorithm
-    def __init__(self, K, T):
-        super().__init__(K, T)
+    def __init__(self, K, T, N, min_payoff, max_payoff):
+        super().__init__(K, T, N, min_payoff, max_payoff)
         self.type = "OPT_MWU"
+        # learning rate from Near-Optimal No-Regret Learning in General Games [Daskalakis et al. 2021]
+        # self.gamma_t = 1 / (2 * self.N * np.log(self.T + 2) ** 4)
 
-    def Update(self, payoffs_t, payoffs_t_1, t, N):
-        # self.gamma_t = 1 / (N * np.log(t + 2) ** 4)
-        payoffs_t = normalize(payoffs_t, payoffs_t.min(), payoffs_t.max())
-        payoffs_t_1 = normalize(payoffs_t_1, payoffs_t_1.min(), payoffs_t_1.max())
+    def Update(self, payoffs_t, payoffs_t_1):
+        payoffs_t = normalize(payoffs_t, self.min_payoff, self.max_payoff)
+        payoffs_t_1 = normalize(payoffs_t_1, self.min_payoff, self.max_payoff)
         loss_t = np.ones(self.K) - payoffs_t
         loss_t_1 = np.ones(self.K) - payoffs_t_1
         losses = 2 * loss_t - loss_t_1
+        # print('OPT', losses)
         super().semi_Update(losses)
 
 
 class Parent_GPMW:
-    def __init__(self, K, T, N, sigma, all_action_profiles, payoff_matrix, kernel_optimization=False):
+    def __init__(self, K, T, N, min_payoff, max_payoff, sigma, all_action_profiles, payoff_matrix,
+                 kernel_optimization=False):
         self.K = K
         self.T = T
         self.N = N
         self.weights = np.ones(K)
         self.UCB_Matrix = np.zeros([K] * N)
-        self.gamma_t = 1
+        self.gamma_t = 0.1
+        # beta from No-Regret Learning in Unknown Games with Correlated Payoffs [Sessa et al. 2019]
         self.beta_t = 2.0
         self.sigma = sigma
+        self.min_payoff = min_payoff
+        self.max_payoff = max_payoff
+
         self.kernel = RBF()
-        self.kernel_matrix = RBF.__call__(self.kernel, all_action_profiles)
-        self.gpr = GaussianProcessRegressor(kernel=self.kernel, n_restarts_optimizer=10, alpha=sigma ** 2)
-        self.mean_matrix = 0 * np.ones(K ** N)
-        self.var_matrix = np.zeros(K ** N)
-        self.all_action_profiles = all_action_profiles
+        self.gpr = GaussianProcessRegressor(kernel=self.kernel, alpha=sigma ** 2)
         if kernel_optimization:
             self.gpr.fit(all_action_profiles, np.ndarray.flatten(payoff_matrix))
             self.kernel = self.gpr.kernel_
+        else:
+            self.gpr.optimizer = None
+
+        self.kernel_matrix = RBF.__call__(self.kernel, all_action_profiles)
+        self.mean_matrix = 0 * np.ones(K ** N)
+        self.var_matrix = np.zeros(K ** N)
+        self.all_action_profiles = all_action_profiles
         for idx in range(K ** N):
             self.var_matrix[idx] = np.array(self.kernel_matrix[idx, idx])
         self.std_matrix = np.sqrt(self.var_matrix)
@@ -72,8 +90,8 @@ class Parent_GPMW:
     def mixed_strategy(self):
         return self.weights / np.sum(self.weights)
 
-    def GP_update(self, history_actions, history_payoffs):
-        if 0:
+    def GP_update(self, history_actions, history_payoffs, recursive_update=True):
+        if not recursive_update:
             self.gpr.fit(history_actions, history_payoffs)
             # params = self.gpr.kernel_.get_params()
             # k1 = params.get('k1__constant_value')
@@ -82,6 +100,7 @@ class Parent_GPMW:
             mean_prediction = np.array(mean_prediction).reshape([self.K] * self.N)
             std_prediction = np.array(std_prediction).reshape([self.K] * self.N)
             self.UCB_Matrix = mean_prediction + self.beta_t * std_prediction
+
         else:
             self.UCB_Matrix = np.ndarray.flatten(self.UCB_Matrix)
             mean_matrix_prev = np.array(self.mean_matrix)
@@ -118,75 +137,85 @@ class Parent_GPMW:
 
 
 class Player_GPMW(Parent_GPMW):
-    def __init__(self, K, T, N, sigma, all_action_profiles, payoff_matrix, kernel_optimization=False):
-        super().__init__(K, T, N, sigma, all_action_profiles, payoff_matrix, kernel_optimization)
+    def __init__(self, K, T, N, min_payoff, max_payoff, sigma, all_action_profiles, payoff_matrix, kernel_optimization=False):
+        super().__init__(K, T, N, min_payoff, max_payoff, sigma, all_action_profiles, payoff_matrix, kernel_optimization)
         self.type = "GPMW"
+        # beta from No-Regret Learning in Unknown Games with Correlated Payoffs [Sessa et al. 2019]
+        self.gamma_t = np.sqrt(8*np.log(self.K)/self.T)
 
-    def Update(self, payoffs, t):
-        # self.gamma_t = np.sqrt(8*np.log(K)/t)
-        payoffs = normalize(payoffs, payoffs.min(), payoffs.max())
+    def Update(self, payoffs):
+        payoffs = normalize(payoffs, self.min_payoff, self.max_payoff)
         losses = np.ones(self.K) - np.array(payoffs)
+        # print('Vanilla', losses)
         super().semi_Update(losses)
 
 
 class Player_OPT_GPMW(Parent_GPMW):
-    def __init__(self, K, T, N, sigma, all_action_profiles, payoff_matrix, kernel_optimization=False):
-        super().__init__(K, T, N, sigma, all_action_profiles, payoff_matrix, kernel_optimization)
+    def __init__(self, K, T, N, min_payoff, max_payoff, sigma, all_action_profiles, payoff_matrix, kernel_optimization=False):
+        super().__init__(K, T, N, min_payoff, max_payoff, sigma, all_action_profiles, payoff_matrix, kernel_optimization)
         self.type = "OPT_GPMW"
+        # beta from No-Regret Learning in Unknown Games with Correlated Payoffs [Sessa et al. 2019]
+        self.gamma_t = np.sqrt(8*np.log(self.K)/self.T)
 
-    def Update(self, payoffs_t, payoffs_t_1, t, N):
-        # self.gamma_t = np.sqrt(8*np.log(K)/t)
-        payoffs_t = normalize(payoffs_t, payoffs_t.min(), payoffs_t.max())
-        payoffs_t_1 = normalize(payoffs_t_1, payoffs_t_1.min(), payoffs_t_1.max())
+    def Update(self, payoffs_t, payoffs_t_1):
+        payoffs_t = normalize(payoffs_t, self.min_payoff, self.max_payoff)
+        payoffs_t_1 = normalize(payoffs_t_1, self.min_payoff, self.max_payoff)
         loss_t = np.ones(self.K) - payoffs_t
         loss_t_1 = np.ones(self.K) - payoffs_t_1
         losses = 2 * loss_t - loss_t_1
+        # print('OPT', losses)
         super().semi_Update(losses)
 
+# EXP3.P algorithm (Auer et al. 2002)
 class Parent_EXP3:
-    def __init__(self, K, T):
+    def __init__(self, K, T, min_payoff, max_payoff):
         self.K = K
         self.T = T
         self.weights = np.ones(K)
-        self.rewards_est = [np.zeros(K), np.zeros(K)]
-        # self.gamma = 1.05 * np.sqrt(np.log(self.K) * self.K / self.T)
-        self.gamma = 0.01
-        # delta = 0.01
-        # self.beta = np.sqrt(np.log(self.K * (1 / delta)) / (self.T * self.K))
-        # self.eta = 0.95 * np.sqrt(np.log(self.K) / (self.T * self.K))
-        # assert self.beta > 0 and self.beta < 1 and self.gamma > 0 and self.gamma < 1
+        self.min_payoff = min_payoff
+        self.max_payoff = max_payoff
+        self.rewards_est = np.zeros(K)
+        # params from Theorem 3.2 of Regret Analysis of Stochastic and Nonstochastic Multi-armed Bandit Problems
+        # [Bubeck and Cesa-Bianchi 2012]
+        self.gamma = 1.05 * np.sqrt(np.log(self.K) * self.K / self.T)
+        delta = 0.01
+        self.beta = np.sqrt(np.log(self.K * (1 / delta)) / (self.T * self.K))
+        self.eta = 0.95 * np.sqrt(np.log(self.K) / (self.T * self.K))
+        assert self.beta > 0 and self.beta < 1 and self.gamma > 0 and self.gamma < 1
 
     def mixed_strategy(self):
         return self.weights / np.sum(self.weights)
 
-    def semi_Update(self, played_a, payoff):
-        prob_played_action = (1 - self.gamma)*(self.weights[played_a] / np.sum(self.weights)) + (self.gamma / self.K)
-        reward_est_new = np.zeros(self.K)
-        reward_est_new[played_a] = payoff / prob_played_action
-        self.rewards_est.pop(0)
-        self.rewards_est.append(reward_est_new)
+    def semi_Update(self, played_a, payoff, recency_bias):
+        payoff = normalize(payoff, self.min_payoff, self.max_payoff)
+        prob = self.weights[played_a] / np.sum(self.weights)
+        self.rewards_est = self.rewards_est + recency_bias * self.beta * np.divide(np.ones(self.K), self.weights / np.sum(self.weights))
+        self.rewards_est[played_a] += recency_bias*(payoff / prob)
+        self.weights = np.exp(np.multiply(self.eta, self.rewards_est))
+        self.weights = self.weights / np.sum(self.weights)
+        self.weights = (1 - self.gamma) * self.weights + self.gamma / self.K * np.ones(self.K)
+
 
 class Player_EXP3(Parent_EXP3):
-    def __init__(self, K, T):
-        super().__init__(K, T)
+    def __init__(self, K, T, min_payoff, max_payoff):
+        super().__init__(K, T, min_payoff, max_payoff)
         self.type = 'EXP3'
+
     def Update(self, played_a, payoff):
-        payoff = normalize(payoff, payoff.min(), payoff.max())
-        super().semi_Update(played_a, payoff)
-        self.weights = np.multiply(self.weights, np.exp((-self.gamma * self.rewards_est[1])/self.K))
-        self.weights = self.weights / np.sum(self.weights)
+        super().semi_Update(played_a, payoff, 1)
+
 
 
 class Player_OPT_EXP3(Parent_EXP3):
-    def __init__(self, K, T):
-        super().__init__(K, T)
+    def __init__(self, K, T, min_payoff, max_payoff):
+        super().__init__(K, T, min_payoff, max_payoff)
         self.type = 'OPT_EXP3'
+
     def Update(self, played_a, payoff):
-        payoff = normalize(payoff, payoff.min(), payoff.max())
-        super().semi_Update(played_a, payoff)
-        opt_reward_estimate = 2*self.rewards_est[1] - self.rewards_est[0]
-        self.weights = np.multiply(self.weights, np.exp((-self.gamma * opt_reward_estimate)/self.K))
-        self.weights = self.weights / np.sum(self.weights)
+        super().semi_Update(played_a, payoff, 2)
+
+
+
 
 def Assign_payoffs(outcome, payoff_matrix):
     return np.squeeze(payoff_matrix[tuple(outcome)])
@@ -207,6 +236,7 @@ def get_combinations(params):
     all_indices = np.indices(params)
     return np.moveaxis(all_indices, 0, -1).reshape(-1, len(params))
 
+
 def normalize_util(payoffs, min_payoff, max_payoff):
     if min_payoff == max_payoff:
         return payoffs
@@ -215,5 +245,6 @@ def normalize_util(payoffs, min_payoff, max_payoff):
     payoffs = np.minimum(payoffs, max_payoff)
     payoffs_scaled = (payoffs - min_payoff) / payoff_range
     return payoffs_scaled
+
 
 normalize = np.vectorize(normalize_util)

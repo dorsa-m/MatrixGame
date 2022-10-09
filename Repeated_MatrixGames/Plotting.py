@@ -45,4 +45,4 @@ def show(str):
     plt.show()
 
 
-show('test77')
+show('result')
